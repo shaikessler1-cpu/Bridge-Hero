@@ -14,7 +14,7 @@
             margin: 0; padding: 0; width: 100%; height: 100%; 
             overflow: hidden; background: #1a1a2e; 
             touch-action: none; user-select: none;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
         }
         canvas { display: block; background: #1a1a2e; }
     </style>
@@ -26,11 +26,11 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-let data = JSON.parse(localStorage.getItem('bridgeHeroFinalV7')) || {
+let data = JSON.parse(localStorage.getItem('bridgeHeroFinalV11')) || {
     gold: 0, highScore: 0, unlocked: ['Hero'], selected: 'Hero',
     unlockedPlats: ['Classic'], selectedPlat: 'Classic', worldReached: 1
 };
-function save() { localStorage.setItem('bridgeHeroFinalV7', JSON.stringify(data)); }
+function save() { localStorage.setItem('bridgeHeroFinalV11', JSON.stringify(data)); }
 
 const CHARS = {
     'Hero': { price: 0, draw: (x, y, s) => {
@@ -78,12 +78,15 @@ const PLATS = {
 let state = 'MENU', score = 0, subState = 'waiting', shopTab = 'CHARS';
 let platforms = [], pillars = [], stick = { len: 0, angle: -Math.PI/2 };
 let player = { x: 0, y: 0, v: 0, targetX: 0, size: 24 };
+let showBird = true;
 
 const BTNS = {
     play1: { x: 0, y: 0, w: 220, h: 60, r: 15 },
     play3: { x: 0, y: 0, w: 220, h: 60, r: 15 },
     shop: { x: 0, y: 0, w: 220, h: 60, r: 15 },
-    back: { x: 0, y: 0, w: 140, h: 45, r: 10 }
+    back: { x: 0, y: 0, w: 140, h: 45, r: 10 },
+    retry: { x: 0, y: 0, w: 200, h: 60, r: 15 },
+    menu: { x: 0, y: 0, w: 200, h: 60, r: 15 }
 };
 
 function initGame(mode = 1) {
@@ -94,6 +97,7 @@ function initGame(mode = 1) {
     player.y = (mode === 3) ? canvas.height/2 : canvas.height * 0.65 - 24;
     player.v = 0; stick = { len: 0, angle: -Math.PI/2 };
     state = 'PLAY'; subState = 'waiting';
+    showBird = true;
 }
 
 function addPlat() {
@@ -104,7 +108,8 @@ function addPlat() {
 }
 
 function spawnPillar() {
-    let gap = 180, pos = 100 + Math.random() * (canvas.height - gap - 200);
+    let gap = score >= 75 ? 170 : 210;
+    let pos = 100 + Math.random() * (canvas.height - gap - 200);
     pillars.push({ x: canvas.width, top: pos, gap: gap, passed: false });
 }
 
@@ -116,7 +121,10 @@ function update() {
     if (state !== 'PLAY') return;
 
     if (score < 50) {
-        if (subState === 'growing') stick.len += 3.8;
+        if (subState === 'growing') {
+            stick.len += 3.8;
+            showBird = false;
+        }
 
         if (subState === 'falling') {
             stick.angle += 0.2;
@@ -153,21 +161,25 @@ function update() {
                 platforms.shift();
                 addPlat();
                 subState = 'waiting';
+                showBird = true;
             }
         }
 
         if (subState === 'dead') {
             player.y += 12;
-            if (player.y > canvas.height) state = 'MENU';
+            if (player.y > canvas.height) state = 'GAMEOVER';
         }
     } else {
         player.v += 0.45;
         player.y += player.v;
 
-        if (pillars.length === 0 || canvas.width - pillars[pillars.length-1].x > 250) spawnPillar();
+        let pillarSpeed = score >= 75 ? 6.5 : 4.5;
+        let pillarFreq = score >= 75 ? 200 : 250;
+
+        if (pillars.length === 0 || canvas.width - pillars[pillars.length-1].x > pillarFreq) spawnPillar();
 
         pillars.forEach(p => {
-            p.x -= 4.5;
+            p.x -= pillarSpeed;
             if (!p.passed && p.x + 50 < player.x) {
                 p.passed = true;
                 score++;
@@ -177,14 +189,23 @@ function update() {
             }
             if (player.x + player.size > p.x && player.x < p.x + 50) {
                 if (player.y < p.top || player.y + player.size > p.top + p.gap) {
-                    state = 'MENU';
+                    state = 'GAMEOVER';
                 }
             }
         });
 
-        if (player.y > canvas.height || player.y < 0) state = 'MENU';
+        if (player.y > canvas.height || player.y < 0) state = 'GAMEOVER';
         pillars = pillars.filter(p => p.x > -100);
     }
+}
+
+function drawBird(x, y) {
+    ctx.fillStyle = '#f1c40f';
+    ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'orange';
+    ctx.beginPath(); ctx.moveTo(x+5, y); ctx.lineTo(x+12, y+3); ctx.lineTo(x+5, y+6); ctx.fill();
+    ctx.fillStyle = 'black';
+    ctx.beginPath(); ctx.arc(x+3, y-2, 1.5, 0, Math.PI*2); ctx.fill();
 }
 
 function drawStyledButton(t, btn, col1, col2) {
@@ -205,12 +226,15 @@ function draw() {
     BTNS.play3.x = canvas.width/2; BTNS.play3.y = canvas.height * 0.53;
     BTNS.shop.x = canvas.width/2; BTNS.shop.y = canvas.height * 0.64;
     BTNS.back.x = canvas.width/2; BTNS.back.y = canvas.height * 0.92;
+    BTNS.retry.x = canvas.width/2; BTNS.retry.y = canvas.height * 0.55;
+    BTNS.menu.x = canvas.width/2; BTNS.menu.y = canvas.height * 0.68;
 
     let bg = '#1a1a2e';
-    if (state === 'PLAY') {
+    if (state === 'PLAY' || state === 'GAMEOVER') {
         if (score < 25) bg = '#2c3e50';
         else if (score < 50) bg = '#3d2b1f';
-        else bg = '#0f0c29';
+        else if (score < 75) bg = '#0f0c29';
+        else bg = '#101820';
     }
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -254,6 +278,15 @@ function draw() {
         }
 
         drawStyledButton('BACK', BTNS.back, '#778899', '#2f4f4f');
+    }
+    else if (state === 'GAMEOVER') {
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white'; ctx.font = 'bold 50px Arial'; ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width/2, canvas.height*0.25);
+        ctx.font = 'bold 24px Arial'; ctx.fillText(`SCORE: ${score}`, canvas.width/2, canvas.height*0.35);
+        ctx.fillStyle = '#f1c40f'; ctx.fillText(`BEST: ${data.highScore}`, canvas.width/2, canvas.height*0.4);
+        drawStyledButton('RETRY', BTNS.retry, '#ff4b2b', '#ff416c');
+        drawStyledButton('MAIN MENU', BTNS.menu, '#778899', '#2f4f4f');
     } else {
         let ph = canvas.height * 0.35;
         if (score < 50) {
@@ -263,6 +296,7 @@ function draw() {
                 if (idx === 1) {
                     ctx.fillStyle = 'red';
                     ctx.beginPath(); ctx.arc(p.x + p.w/2, canvas.height-ph+4, 4, 0, Math.PI*2); ctx.fill();
+                    
                 }
             });
             ctx.strokeStyle = 'white'; ctx.lineWidth = 4;
@@ -271,7 +305,8 @@ function draw() {
             ctx.lineTo(sX + Math.cos(stick.angle)*stick.len, sY + Math.sin(stick.angle)*stick.len); ctx.stroke();
         } else {
             pillars.forEach(p => {
-                ctx.fillStyle = '#2ecc71'; ctx.fillRect(p.x, 0, 50, p.top);
+                ctx.fillStyle = score >= 75 ? '#e74c3c' : '#2ecc71';
+                ctx.fillRect(p.x, 0, 50, p.top);
                 ctx.fillRect(p.x, p.top + p.gap, 50, canvas.height);
             });
         }
@@ -279,10 +314,10 @@ function draw() {
         CHARS[data.selected].draw(player.x, player.y, player.size);
         ctx.fillStyle = 'white'; ctx.font = '900 60px Arial'; ctx.textAlign = 'center';
         ctx.fillText(score, canvas.width/2, 100);
-        if (score >= 25 && score < 50) {
-            ctx.font = 'bold 14px Arial';
-            ctx.fillText('LEVEL 2: DESERT', canvas.width/2, 130);
-        }
+        
+        if (score >= 25 && score < 50) { ctx.font = 'bold 14px Arial'; ctx.fillText('LEVEL 2: DESERT', canvas.width/2, 130); }
+        if (score >= 50 && score < 75) { ctx.font = 'bold 14px Arial'; ctx.fillText('LEVEL 3: SKY FLIGHT', canvas.width/2, 130); }
+        if (score >= 75) { ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#e74c3c'; ctx.fillText('LEVEL 4: STORM SURVIVAL', canvas.width/2, 130); }
     }
 }
 
@@ -291,10 +326,9 @@ function handleInput(ex, ey) {
         if (isInside(ex, ey, BTNS.play1)) initGame(1);
         if (data.worldReached >= 3 && isInside(ex, ey, BTNS.play3)) initGame(3);
         if (isInside(ex, ey, BTNS.shop)) state = 'SHOP';
-    } else if (state === 'SHOP') {
-        if (ey > canvas.height*0.1 && ey < canvas.height*0.2) {
-            shopTab = ex < canvas.width/2 ? 'CHARS' : 'PLATS';
-        }
+    } 
+    else if (state === 'SHOP') {
+        if (ey > canvas.height*0.1 && ey < canvas.height*0.2) { shopTab = ex < canvas.width/2 ? 'CHARS' : 'PLATS'; }
         if (isInside(ex, ey, BTNS.back)) state = 'MENU';
         let items = shopTab === 'CHARS' ? CHARS : PLATS;
         let i = 0;
@@ -304,15 +338,21 @@ function handleInput(ex, ey) {
             if (Math.abs(ex-x) < 75 && Math.abs(ey-y) < 50) {
                 let list = shopTab === 'CHARS' ? data.unlocked : data.unlockedPlats;
                 if (!list.includes(name)) {
-                    if (data.gold >= items[name].price) { data.gold -= items[name].price; list.push(name); save(); }
+                    let pricesChars = [0, 5, 10, 15, 20, 25, 50];
+                    let price = shopTab === 'CHARS' ? pricesChars[i] : items[name].price;
+                    if (data.gold >= price) { data.gold -= price; list.push(name); save(); }
                 } else {
                     if (shopTab === 'CHARS') data.selected = name; else data.selectedPlat = name;
                     save();
                 }
-            }
-            i++;
+            } i++;
         }
-    } else {
+    } 
+    else if (state === 'GAMEOVER') {
+        if (isInside(ex, ey, BTNS.retry)) initGame(score >= 50 ? 3 : 1);
+        if (isInside(ex, ey, BTNS.menu)) state = 'MENU';
+    }
+    else {
         if (score < 50) {
             if (subState === 'waiting') subState = 'growing';
         } else {
