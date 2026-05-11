@@ -27,8 +27,8 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 let data = JSON.parse(localStorage.getItem('bridgeHeroFinalV11')) || {
-    gold: 0, highScore: 633, unlocked: ['Hero'], selected: 'Hero',
-    unlockedPlats: ['Classic'], selectedPlat: 'Classic', worldReached: 3
+    gold: 0, highScore: 0, unlocked: ['Hero'], selected: 'Hero',
+    unlockedPlats: ['Classic'], selectedPlat: 'Classic', worldReached: 1
 };
 function save() { localStorage.setItem('bridgeHeroFinalV11', JSON.stringify(data)); }
 
