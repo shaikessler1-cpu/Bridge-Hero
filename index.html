@@ -21,139 +21,308 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// --- DATA ---
-let data = {
+let data = JSON.parse(localStorage.getItem('bridgeHeroFinalV7')) || {
     gold: 0, highScore: 0, unlocked: ['Hero'], selected: 'Hero',
     unlockedPlats: ['Classic'], selectedPlat: 'Classic', worldReached: 1
 };
+function save() { localStorage.setItem('bridgeHeroFinalV7', JSON.stringify(data)); }
 
-// Try to load save data
-const saved = localStorage.getItem('bridgeHeroV9');
-if (saved) {
-    try { data = JSON.parse(saved); } catch(e) { console.log("New Save Created"); }
-}
-
-function save() { localStorage.setItem('bridgeHeroV9', JSON.stringify(data)); }
-
-// --- CHARACTERS ---
 const CHARS = {
-    'Hero': (x, y, s) => {
-        ctx.fillStyle = '#e67e22'; ctx.fillRect(x, y, s, s);
+    'Hero': { price: 0, draw: (x, y, s) => {
+        ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.roundRect(x, y, s, s, s*0.2); ctx.fill();
         ctx.fillStyle = 'white'; ctx.fillRect(x+s*0.6, y+s*0.2, s*0.2, s*0.2);
-    },
-    'Ninja': (x, y, s) => {
-        ctx.fillStyle = '#222'; ctx.fillRect(x, y, s, s);
+    }},
+    'Ninja': { price: 30, draw: (x, y, s) => {
+        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.roundRect(x, y, s, s, s*0.2); ctx.fill();
         ctx.fillStyle = '#e74c3c'; ctx.fillRect(x, y+s*0.3, s, s*0.2);
-    },
-    'Robot': (x, y, s) => {
-        ctx.fillStyle = '#bdc3c7'; ctx.fillRect(x, y, s, s);
+        ctx.fillStyle = 'white'; ctx.fillRect(x+s*0.2, y+s*0.35, s*0.2, s*0.1);
+    }},
+    'Robot': { price: 50, draw: (x, y, s) => {
+        ctx.fillStyle = '#bdc3c7'; ctx.beginPath(); ctx.roundRect(x, y, s, s, 2); ctx.fill();
         ctx.fillStyle = '#00d2ff'; ctx.fillRect(x+s*0.1, y+s*0.2, s*0.8, s*0.3);
-    }
+    }},
+    'Alien': { price: 75, draw: (x, y, s) => {
+        ctx.fillStyle = '#a29bfe'; ctx.beginPath(); ctx.ellipse(x+s/2, y+s/2, s/1.8, s/2.2, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'black'; ctx.beginPath(); ctx.ellipse(x+s*0.3, y+s*0.45, s*0.15, s*0.2, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(x+s*0.7, y+s*0.45, s*0.15, s*0.2, 0, 0, Math.PI*2); ctx.fill();
+    }},
+    'Ghost': { price: 100, draw: (x, y, s) => {
+        ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.roundRect(x, y, s, s*0.8, [s/2, s/2, 5, 5]); ctx.fill();
+    }},
+    'Knight': { price: 150, draw: (x, y, s) => {
+        ctx.fillStyle = '#7f8c8d'; ctx.fillRect(x, y, s, s);
+        ctx.fillStyle = '#f1c40f'; ctx.fillRect(x, y+s*0.4, s, s*0.15);
+    }},
+    'Demon': { price: 250, draw: (x, y, s) => {
+        ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.roundRect(x, y, s, s, 4); ctx.fill();
+        ctx.fillStyle = 'black'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x+s*0.3, y-s*0.3); ctx.lineTo(x+s*0.4, y); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(x+s, y); ctx.lineTo(x+s*0.7, y-s*0.3); ctx.lineTo(x+s*0.6, y); ctx.fill();
+    }}
 };
 
 const PLATS = {
-    'Classic': '#222', 'Obsidian': '#0b0d0f', 'Neon Blue': '#00d2ff', 
-    'Neon Pink': '#ff00ff', 'Emerald': '#2ecc71', 'Gold Bar': '#f1c40f'
+    'Classic': { color: '#222', price: 0 },
+    'Obsidian': { color: '#0b0d0f', price: 40 },
+    'Neon Blue': { color: '#00d2ff', price: 60 },
+    'Neon Pink': { color: '#ff00ff', price: 60 },
+    'Emerald': { color: '#2ecc71', price: 100 },
+    'Gold Bar': { color: '#f1c40f', price: 150 },
+    'Magma': { color: '#e67e22', price: 200 }
 };
 
-// --- GAME VARS ---
-let state = 'MENU', score = 0, subState = 'waiting';
+let state = 'MENU', score = 0, subState = 'waiting', shopTab = 'CHARS';
 let platforms = [], pillars = [], stick = { len: 0, angle: -Math.PI/2 };
 let player = { x: 0, y: 0, v: 0, targetX: 0, size: 24 };
 
+const BTNS = {
+    play1: { x: 0, y: 0, w: 220, h: 60, r: 15 },
+    play3: { x: 0, y: 0, w: 220, h: 60, r: 15 },
+    shop: { x: 0, y: 0, w: 220, h: 60, r: 15 },
+    back: { x: 0, y: 0, w: 140, h: 45, r: 10 }
+};
+
 function initGame(mode = 1) {
     score = (mode === 3) ? 50 : 0;
-    platforms = [{ x: 50, w: 80 }];
+    platforms = [{ x: 50, w: 80 }]; pillars = [];
     addPlat();
     player.x = 50 + 80 - 24;
     player.y = (mode === 3) ? canvas.height/2 : canvas.height * 0.65 - 24;
+    player.v = 0; stick = { len: 0, angle: -Math.PI/2 };
     state = 'PLAY'; subState = 'waiting';
-    stick.len = 0; stick.angle = -Math.PI/2;
 }
 
 function addPlat() {
     const last = platforms[platforms.length-1];
-    platforms.push({ x: last.x + last.w + 60 + Math.random()*100, w: 40 + Math.random()*40 });
+    let minG = 50, maxG = 150, minW = 40, maxW = 80;
+    if (score >= 25) { minG = 80; maxG = 200; minW = 30; maxW = 50; }
+    platforms.push({ x: last.x + last.w + minG + Math.random() * (maxG - minG), w: minW + Math.random() * (maxW - minW) });
+}
+
+function spawnPillar() {
+    let gap = 180, pos = 100 + Math.random() * (canvas.height - gap - 200);
+    pillars.push({ x: canvas.width, top: pos, gap: gap, passed: false });
+}
+
+function isInside(ex, ey, btn) {
+    return ex > btn.x - btn.w/2 && ex < btn.x + btn.w/2 && ey > btn.y - btn.h/2 && ey < btn.y + btn.h/2;
 }
 
 function update() {
     if (state !== 'PLAY') return;
+
     if (score < 50) {
-        if (subState === 'growing') stick.len += 4;
+        if (subState === 'growing') stick.len += 3.8;
+
         if (subState === 'falling') {
             stick.angle += 0.2;
-            if (stick.angle >= 0) { 
-                stick.angle = 0; subState = 'walking'; 
-                player.targetX = platforms[0].x + platforms[0].w + stick.len - 12; 
+            if (stick.angle >= 0) {
+                stick.angle = 0;
+                subState = 'walking';
+                player.targetX = platforms[0].x + platforms[0].w + stick.len - 12;
             }
         }
+
         if (subState === 'walking') {
             player.x += 5;
             if (player.x >= player.targetX) {
                 let end = platforms[0].x + platforms[0].w + stick.len;
                 if (end >= platforms[1].x && end <= platforms[1].x + platforms[1].w) {
-                    score++; data.gold++; if(score > data.highScore) data.highScore = score;
-                    save(); subState = 'transition';
-                } else { subState = 'dead'; }
+                    score++;
+                    if (score % 5 === 0) data.gold += 1;
+                    if (score > data.highScore) data.highScore = score;
+                    if (score === 50) data.worldReached = 3;
+                    save();
+                    subState = 'transition';
+                } else {
+                    subState = 'dead';
+                }
             }
         }
+
         if (subState === 'transition') {
-            platforms.forEach(p => p.x -= 20); player.x -= 20;
-            if (platforms[1].x <= 50) { platforms.shift(); addPlat(); subState = 'waiting'; stick.len = 0; stick.angle = -Math.PI/2; }
+            platforms.forEach(p => p.x -= 15);
+            player.x -= 15;
+            stick.len = 0;
+            stick.angle = -Math.PI / 2;
+            if (platforms[1].x <= 50) {
+                platforms.shift();
+                addPlat();
+                subState = 'waiting';
+            }
         }
-        if (subState === 'dead') { player.y += 10; if (player.y > canvas.height) state = 'MENU'; }
+
+        if (subState === 'dead') {
+            player.y += 12;
+            if (player.y > canvas.height) state = 'MENU';
+        }
     } else {
-        player.v += 0.5; player.y += player.v;
+        player.v += 0.45;
+        player.y += player.v;
+
+        if (pillars.length === 0 || canvas.width - pillars[pillars.length-1].x > 250) spawnPillar();
+
+        pillars.forEach(p => {
+            p.x -= 4.5;
+            if (!p.passed && p.x + 50 < player.x) {
+                p.passed = true;
+                score++;
+                if (score % 5 === 0) data.gold += 1;
+                if (score > data.highScore) data.highScore = score;
+                save();
+            }
+            if (player.x + player.size > p.x && player.x < p.x + 50) {
+                if (player.y < p.top || player.y + player.size > p.top + p.gap) {
+                    state = 'MENU';
+                }
+            }
+        });
+
         if (player.y > canvas.height || player.y < 0) state = 'MENU';
+        pillars = pillars.filter(p => p.x > -100);
     }
+}
+
+function drawStyledButton(t, btn, col1, col2) {
+    const grd = ctx.createLinearGradient(btn.x - btn.w/2, btn.y, btn.x + btn.w/2, btn.y);
+    grd.addColorStop(0, col1);
+    grd.addColorStop(1, col2);
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.roundRect(btn.x - btn.w/2, btn.y - btn.h/2, btn.w, btn.h, btn.r); ctx.fill();
+    ctx.fillStyle = 'white'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
+    ctx.fillText(t, btn.x, btn.y + 7);
 }
 
 function draw() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    BTNS.play1.x = canvas.width/2; BTNS.play1.y = canvas.height * 0.42;
+    BTNS.play3.x = canvas.width/2; BTNS.play3.y = canvas.height * 0.53;
+    BTNS.shop.x = canvas.width/2; BTNS.shop.y = canvas.height * 0.64;
+    BTNS.back.x = canvas.width/2; BTNS.back.y = canvas.height * 0.92;
+
+    let bg = '#1a1a2e';
+    if (state === 'PLAY') {
+        if (score < 25) bg = '#2c3e50';
+        else if (score < 50) bg = '#3d2b1f';
+        else bg = '#0f0c29';
+    }
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (state === 'MENU') {
-        ctx.fillStyle = 'white'; ctx.textAlign = 'center';
-        ctx.font = 'bold 40px Arial'; ctx.fillText("BRIDGE HERO", canvas.width/2, 150);
-        ctx.font = '20px Arial'; ctx.fillText("Tap to Start", canvas.width/2, 300);
-        ctx.fillText("Best: " + data.highScore, canvas.width/2, 200);
+        ctx.fillStyle = 'white'; ctx.font = 'bold 45px Arial'; ctx.textAlign = 'center';
+        ctx.fillText('BRIDGE HERO', canvas.width/2, canvas.height*0.2);
+        ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 18px Arial';
+        ctx.fillText(`★ BEST: ${data.highScore} ★`, canvas.width/2, canvas.height*0.27);
+        drawStyledButton('START WORLD 1', BTNS.play1, '#ff4b2b', '#ff416c');
+        if (data.worldReached >= 3) drawStyledButton('CONTINUE WORLD 3', BTNS.play3, '#00b09b', '#96c93d');
+        drawStyledButton('THE SHOP', BTNS.shop, '#4776e6', '#8e54e9');
+        ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 22px Arial';
+        ctx.fillText(`GOLD: ${data.gold}`, canvas.width/2, canvas.height*0.8);
+    } else if (state === 'SHOP') {
+        ctx.fillStyle = 'white'; ctx.font = 'bold 30px Arial'; ctx.textAlign = 'center';
+        ctx.fillText('GAME SHOP', canvas.width/2, canvas.height*0.08);
+        ctx.fillStyle = shopTab === 'CHARS' ? '#4776e6' : '#2c3e50';
+        ctx.beginPath(); ctx.roundRect(canvas.width/2-110, canvas.height*0.12, 100, 40, 8); ctx.fill();
+        ctx.fillStyle = shopTab === 'PLATS' ? '#4776e6' : '#2c3e50';
+        ctx.beginPath(); ctx.roundRect(canvas.width/2+10, canvas.height*0.12, 100, 40, 8); ctx.fill();
+        ctx.fillStyle = 'white'; ctx.font = 'bold 14px Arial';
+        ctx.fillText('HEROES', canvas.width/2-60, canvas.height*0.145);
+        ctx.fillText('BLOCKS', canvas.width/2+60, canvas.height*0.145);
+
+        let items = shopTab === 'CHARS' ? CHARS : PLATS;
+        let i = 0;
+        for (let name in items) {
+            let x = canvas.width/2 - 85 + (i % 2) * 170;
+            let y = canvas.height*0.28 + Math.floor(i/2) * 115;
+            let isSelected = (shopTab === 'CHARS' ? data.selected : data.selectedPlat) === name;
+            let isUnlocked = (shopTab === 'CHARS' ? data.unlocked : data.unlockedPlats).includes(name);
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            ctx.beginPath(); ctx.roundRect(x-75, y-50, 150, 100, 12); ctx.fill();
+            if (isSelected) { ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 3; ctx.stroke(); }
+            if (shopTab === 'CHARS') items[name].draw(x-20, y-25, 40);
+            else { ctx.fillStyle = items[name].color; ctx.beginPath(); ctx.roundRect(x-30, y-20, 60, 20, 4); ctx.fill(); }
+            ctx.fillStyle = isUnlocked ? 'white' : '#f1c40f'; ctx.font = 'bold 13px Arial';
+            ctx.fillText(isUnlocked ? name : `${items[name].price} G`, x, y+35);
+            i++;
+        }
+
+        drawStyledButton('BACK', BTNS.back, '#778899', '#2f4f4f');
     } else {
         let ph = canvas.height * 0.35;
-        platforms.forEach(p => {
-            ctx.fillStyle = PLATS[data.selectedPlat] || '#222';
-            ctx.fillRect(p.x, canvas.height - ph, p.w, ph);
-        });
-        ctx.strokeStyle = 'white'; ctx.lineWidth = 4;
-        let sx = platforms[0].x + platforms[0].w, sy = canvas.height - ph;
-        ctx.beginPath(); ctx.moveTo(sx, sy);
-        ctx.lineTo(sx + Math.cos(stick.angle)*stick.len, sy + Math.sin(stick.angle)*stick.len); ctx.stroke();
-        
-        CHARS[data.selected](player.x, player.y, player.size);
-        ctx.fillStyle = 'white'; ctx.font = '40px Arial'; ctx.fillText(score, canvas.width/2, 100);
+        if (score < 50) {
+            platforms.forEach((p, idx) => {
+                ctx.fillStyle = PLATS[data.selectedPlat].color;
+                ctx.fillRect(p.x, canvas.height-ph, p.w, ph);
+                if (idx === 1) {
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath(); ctx.arc(p.x + p.w/2, canvas.height-ph+4, 4, 0, Math.PI*2); ctx.fill();
+                }
+            });
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 4;
+            let sX = platforms[0].x + platforms[0].w, sY = canvas.height - ph;
+            ctx.beginPath(); ctx.moveTo(sX, sY);
+            ctx.lineTo(sX + Math.cos(stick.angle)*stick.len, sY + Math.sin(stick.angle)*stick.len); ctx.stroke();
+        } else {
+            pillars.forEach(p => {
+                ctx.fillStyle = '#2ecc71'; ctx.fillRect(p.x, 0, 50, p.top);
+                ctx.fillRect(p.x, p.top + p.gap, 50, canvas.height);
+            });
+        }
+
+        CHARS[data.selected].draw(player.x, player.y, player.size);
+        ctx.fillStyle = 'white'; ctx.font = '900 60px Arial'; ctx.textAlign = 'center';
+        ctx.fillText(score, canvas.width/2, 100);
+        if (score >= 25 && score < 50) {
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('LEVEL 2: DESERT', canvas.width/2, 130);
+        }
     }
-    requestAnimationFrame(draw);
 }
 
-// Input
-function input() {
-    if (state === 'MENU') initGame();
-    else if (subState === 'waiting') subState = 'growing';
-    else if (score >= 50) player.v = -8;
+function handleInput(ex, ey) {
+    if (state === 'MENU') {
+        if (isInside(ex, ey, BTNS.play1)) initGame(1);
+        if (data.worldReached >= 3 && isInside(ex, ey, BTNS.play3)) initGame(3);
+        if (isInside(ex, ey, BTNS.shop)) state = 'SHOP';
+    } else if (state === 'SHOP') {
+        if (ey > canvas.height*0.1 && ey < canvas.height*0.2) {
+            shopTab = ex < canvas.width/2 ? 'CHARS' : 'PLATS';
+        }
+        if (isInside(ex, ey, BTNS.back)) state = 'MENU';
+        let items = shopTab === 'CHARS' ? CHARS : PLATS;
+        let i = 0;
+        for (let name in items) {
+            let x = canvas.width/2 - 85 + (i % 2) * 170;
+            let y = canvas.height*0.28 + Math.floor(i/2) * 115;
+            if (Math.abs(ex-x) < 75 && Math.abs(ey-y) < 50) {
+                let list = shopTab === 'CHARS' ? data.unlocked : data.unlockedPlats;
+                if (!list.includes(name)) {
+                    if (data.gold >= items[name].price) { data.gold -= items[name].price; list.push(name); save(); }
+                } else {
+                    if (shopTab === 'CHARS') data.selected = name; else data.selectedPlat = name;
+                    save();
+                }
+            }
+            i++;
+        }
+    } else {
+        if (score < 50) {
+            if (subState === 'waiting') subState = 'growing';
+        } else {
+            player.v = -7.5;
+        }
+    }
 }
 
-function release() {
-    if (subState === 'growing') subState = 'falling';
-}
+canvas.addEventListener('mousedown', (e) => handleInput(e.clientX, e.clientY));
+canvas.addEventListener('mouseup', () => { if (state === 'PLAY' && score < 50 && subState === 'growing') subState = 'falling'; });
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e.touches[0].clientX, e.touches[0].clientY); }, {passive: false});
+canvas.addEventListener('touchend', () => { if (state === 'PLAY' && score < 50 && subState === 'growing') subState = 'falling'; });
 
-window.addEventListener('mousedown', input);
-window.addEventListener('mouseup', release);
-window.addEventListener('touchstart', (e) => { e.preventDefault(); input(); }, {passive: false});
-window.addEventListener('touchend', release);
-
-draw();
-update();
-setInterval(update, 1000/60);
+function frame() { update(); draw(); requestAnimationFrame(frame); }
+frame();
 </script>
 </body>
 </html>
