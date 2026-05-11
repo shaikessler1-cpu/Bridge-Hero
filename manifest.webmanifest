@@ -1,0 +1,21 @@
+{
+  "name": "Bridge Hero",
+  "short_name": "BridgeHero",
+  "description": "A bridge-building arcade game with shop and unlockable characters.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "shais_game_icon.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "shais_game_icon.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
