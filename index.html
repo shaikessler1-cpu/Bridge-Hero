@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bridge Hero</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="apple-touch-icon" href="shais_game_icon.jpeg">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
@@ -32,28 +37,28 @@ const CHARS = {
         ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.roundRect(x, y, s, s, s*0.2); ctx.fill();
         ctx.fillStyle = 'white'; ctx.fillRect(x+s*0.6, y+s*0.2, s*0.2, s*0.2);
     }},
-    'Ninja': { price: 30, draw: (x, y, s) => {
+    'Ninja': { price: 5, draw: (x, y, s) => {
         ctx.fillStyle = '#222'; ctx.beginPath(); ctx.roundRect(x, y, s, s, s*0.2); ctx.fill();
         ctx.fillStyle = '#e74c3c'; ctx.fillRect(x, y+s*0.3, s, s*0.2);
         ctx.fillStyle = 'white'; ctx.fillRect(x+s*0.2, y+s*0.35, s*0.2, s*0.1);
     }},
-    'Robot': { price: 50, draw: (x, y, s) => {
+    'Robot': { price: 10, draw: (x, y, s) => {
         ctx.fillStyle = '#bdc3c7'; ctx.beginPath(); ctx.roundRect(x, y, s, s, 2); ctx.fill();
         ctx.fillStyle = '#00d2ff'; ctx.fillRect(x+s*0.1, y+s*0.2, s*0.8, s*0.3);
     }},
-    'Alien': { price: 75, draw: (x, y, s) => {
+    'Alien': { price: 15, draw: (x, y, s) => {
         ctx.fillStyle = '#a29bfe'; ctx.beginPath(); ctx.ellipse(x+s/2, y+s/2, s/1.8, s/2.2, 0, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = 'black'; ctx.beginPath(); ctx.ellipse(x+s*0.3, y+s*0.45, s*0.15, s*0.2, 0, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.ellipse(x+s*0.7, y+s*0.45, s*0.15, s*0.2, 0, 0, Math.PI*2); ctx.fill();
     }},
-    'Ghost': { price: 100, draw: (x, y, s) => {
+    'Ghost': { price: 20, draw: (x, y, s) => {
         ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.roundRect(x, y, s, s*0.8, [s/2, s/2, 5, 5]); ctx.fill();
     }},
-    'Knight': { price: 150, draw: (x, y, s) => {
+    'Knight': { price: 25, draw: (x, y, s) => {
         ctx.fillStyle = '#7f8c8d'; ctx.fillRect(x, y, s, s);
         ctx.fillStyle = '#f1c40f'; ctx.fillRect(x, y+s*0.4, s, s*0.15);
     }},
-    'Demon': { price: 250, draw: (x, y, s) => {
+    'Demon': { price: 50, draw: (x, y, s) => {
         ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.roundRect(x, y, s, s, 4); ctx.fill();
         ctx.fillStyle = 'black'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x+s*0.3, y-s*0.3); ctx.lineTo(x+s*0.4, y); ctx.fill();
         ctx.beginPath(); ctx.moveTo(x+s, y); ctx.lineTo(x+s*0.7, y-s*0.3); ctx.lineTo(x+s*0.6, y); ctx.fill();
