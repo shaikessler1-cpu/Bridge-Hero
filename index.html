@@ -27,8 +27,8 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 let data = JSON.parse(localStorage.getItem('bridgeHeroFinalV11')) || {
-    gold: 0, highScore: 0, unlocked: ['Hero'], selected: 'Hero',
-    unlockedPlats: ['Classic'], selectedPlat: 'Classic', worldReached: 1
+    gold: 0, highScore: 633, unlocked: ['Hero'], selected: 'Hero',
+    unlockedPlats: ['Classic'], selectedPlat: 'Classic', worldReached: 3
 };
 function save() { localStorage.setItem('bridgeHeroFinalV11', JSON.stringify(data)); }
 
@@ -79,6 +79,10 @@ let state = 'MENU', score = 0, subState = 'waiting', shopTab = 'CHARS';
 let platforms = [], pillars = [], stick = { len: 0, angle: -Math.PI/2 };
 let player = { x: 0, y: 0, v: 0, targetX: 0, size: 24 };
 let showBird = true;
+const LEVEL_STEP = 25;
+const WORLD_3_SCORE = LEVEL_STEP * 2;
+const LEVEL_4_SCORE = LEVEL_STEP * 3;
+const LEVEL_5_SCORE = LEVEL_STEP * 4;
 
 const BTNS = {
     play1: { x: 0, y: 0, w: 220, h: 60, r: 15 },
@@ -90,7 +94,7 @@ const BTNS = {
 };
 
 function initGame(mode = 1) {
-    score = (mode === 3) ? 50 : 0;
+    score = (mode === 3) ? WORLD_3_SCORE : 0;
     platforms = [{ x: 50, w: 80 }]; pillars = [];
     addPlat();
     player.x = 50 + 80 - 24;
@@ -103,12 +107,12 @@ function initGame(mode = 1) {
 function addPlat() {
     const last = platforms[platforms.length-1];
     let minG = 50, maxG = 150, minW = 40, maxW = 80;
-    if (score >= 25) { minG = 80; maxG = 200; minW = 30; maxW = 50; }
+    if (score >= LEVEL_STEP) { minG = 80; maxG = 200; minW = 30; maxW = 50; }
     platforms.push({ x: last.x + last.w + minG + Math.random() * (maxG - minG), w: minW + Math.random() * (maxW - minW) });
 }
 
 function spawnPillar() {
-    let gap = score >= 75 ? 170 : 210;
+    let gap = score >= LEVEL_4_SCORE ? 200 : 250;  // 250 for level 3, 200 for level 4 and 5
     let pos = 100 + Math.random() * (canvas.height - gap - 200);
     pillars.push({ x: canvas.width, top: pos, gap: gap, passed: false });
 }
@@ -120,7 +124,7 @@ function isInside(ex, ey, btn) {
 function update() {
     if (state !== 'PLAY') return;
 
-    if (score < 50) {
+    if (score < WORLD_3_SCORE) {
         if (subState === 'growing') {
             stick.len += 3.8;
             showBird = false;
@@ -141,9 +145,9 @@ function update() {
                 let end = platforms[0].x + platforms[0].w + stick.len;
                 if (end >= platforms[1].x && end <= platforms[1].x + platforms[1].w) {
                     score++;
-                    if (score % 5 === 0) data.gold += 1;
+                    if (score % LEVEL_STEP === 0) data.gold += 1;
                     if (score > data.highScore) data.highScore = score;
-                    if (score === 50) data.worldReached = 3;
+                    if (score === WORLD_3_SCORE) data.worldReached = 3;
                     save();
                     subState = 'transition';
                 } else {
@@ -173,8 +177,8 @@ function update() {
         player.v += 0.45;
         player.y += player.v;
 
-        let pillarSpeed = score >= 75 ? 6.5 : 4.5;
-        let pillarFreq = score >= 75 ? 200 : 250;
+        let pillarSpeed = score >= LEVEL_4_SCORE ? 5.5 : 3.5;  // 3.5 for level 3, 5.5 for level 4 and 5
+        let pillarFreq = score >= LEVEL_4_SCORE ? 250 : 300;  // 300 for level 3, 250 for level 4 and 5
 
         if (pillars.length === 0 || canvas.width - pillars[pillars.length-1].x > pillarFreq) spawnPillar();
 
@@ -183,7 +187,7 @@ function update() {
             if (!p.passed && p.x + 50 < player.x) {
                 p.passed = true;
                 score++;
-                if (score % 5 === 0) data.gold += 1;
+                if (score % LEVEL_STEP === 0) data.gold += 1;
                 if (score > data.highScore) data.highScore = score;
                 save();
             }
@@ -200,12 +204,7 @@ function update() {
 }
 
 function drawBird(x, y) {
-    ctx.fillStyle = '#f1c40f';
-    ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = 'orange';
-    ctx.beginPath(); ctx.moveTo(x+5, y); ctx.lineTo(x+12, y+3); ctx.lineTo(x+5, y+6); ctx.fill();
-    ctx.fillStyle = 'black';
-    ctx.beginPath(); ctx.arc(x+3, y-2, 1.5, 0, Math.PI*2); ctx.fill();
+    // Removed as per request
 }
 
 function drawStyledButton(t, btn, col1, col2) {
@@ -231,9 +230,9 @@ function draw() {
 
     let bg = '#1a1a2e';
     if (state === 'PLAY' || state === 'GAMEOVER') {
-        if (score < 25) bg = '#2c3e50';
-        else if (score < 50) bg = '#3d2b1f';
-        else if (score < 75) bg = '#0f0c29';
+        if (score < LEVEL_STEP) bg = '#2c3e50';
+        else if (score < WORLD_3_SCORE) bg = '#3d2b1f';
+        else if (score < LEVEL_4_SCORE) bg = '#0f0c29';
         else bg = '#101820';
     }
     ctx.fillStyle = bg;
@@ -289,7 +288,7 @@ function draw() {
         drawStyledButton('MAIN MENU', BTNS.menu, '#778899', '#2f4f4f');
     } else {
         let ph = canvas.height * 0.35;
-        if (score < 50) {
+        if (score < WORLD_3_SCORE) {
             platforms.forEach((p, idx) => {
                 ctx.fillStyle = PLATS[data.selectedPlat].color;
                 ctx.fillRect(p.x, canvas.height-ph, p.w, ph);
@@ -305,7 +304,7 @@ function draw() {
             ctx.lineTo(sX + Math.cos(stick.angle)*stick.len, sY + Math.sin(stick.angle)*stick.len); ctx.stroke();
         } else {
             pillars.forEach(p => {
-                ctx.fillStyle = score >= 75 ? '#e74c3c' : '#2ecc71';
+                ctx.fillStyle = score >= LEVEL_4_SCORE ? '#e74c3c' : '#2ecc71';
                 ctx.fillRect(p.x, 0, 50, p.top);
                 ctx.fillRect(p.x, p.top + p.gap, 50, canvas.height);
             });
@@ -315,9 +314,10 @@ function draw() {
         ctx.fillStyle = 'white'; ctx.font = '900 60px Arial'; ctx.textAlign = 'center';
         ctx.fillText(score, canvas.width/2, 100);
         
-        if (score >= 25 && score < 50) { ctx.font = 'bold 14px Arial'; ctx.fillText('LEVEL 2: DESERT', canvas.width/2, 130); }
-        if (score >= 50 && score < 75) { ctx.font = 'bold 14px Arial'; ctx.fillText('LEVEL 3: SKY FLIGHT', canvas.width/2, 130); }
-        if (score >= 75) { ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#e74c3c'; ctx.fillText('LEVEL 4: STORM SURVIVAL', canvas.width/2, 130); }
+        if (score >= LEVEL_STEP && score < WORLD_3_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillText('LEVEL 2: DESERT', canvas.width/2, 130); }
+        if (score >= WORLD_3_SCORE && score < LEVEL_4_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillText('LEVEL 3: SKY FLIGHT', canvas.width/2, 130); }
+        if (score >= LEVEL_4_SCORE && score < LEVEL_5_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#e74c3c'; ctx.fillText('LEVEL 4: STORM SURVIVAL', canvas.width/2, 130); }
+        if (score >= LEVEL_5_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#e74c3c'; ctx.fillText('LEVEL 5: FINAL STORM', canvas.width/2, 130); }
     }
 }
 
@@ -349,11 +349,11 @@ function handleInput(ex, ey) {
         }
     } 
     else if (state === 'GAMEOVER') {
-        if (isInside(ex, ey, BTNS.retry)) initGame(score >= 50 ? 3 : 1);
+        if (isInside(ex, ey, BTNS.retry)) initGame(score >= WORLD_3_SCORE ? 3 : 1);
         if (isInside(ex, ey, BTNS.menu)) state = 'MENU';
     }
     else {
-        if (score < 50) {
+        if (score < WORLD_3_SCORE) {
             if (subState === 'waiting') subState = 'growing';
         } else {
             player.v = -7.5;
@@ -362,9 +362,9 @@ function handleInput(ex, ey) {
 }
 
 canvas.addEventListener('mousedown', (e) => handleInput(e.clientX, e.clientY));
-canvas.addEventListener('mouseup', () => { if (state === 'PLAY' && score < 50 && subState === 'growing') subState = 'falling'; });
+canvas.addEventListener('mouseup', () => { if (state === 'PLAY' && score < WORLD_3_SCORE && subState === 'growing') subState = 'falling'; });
 canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e.touches[0].clientX, e.touches[0].clientY); }, {passive: false});
-canvas.addEventListener('touchend', () => { if (state === 'PLAY' && score < 50 && subState === 'growing') subState = 'falling'; });
+canvas.addEventListener('touchend', () => { if (state === 'PLAY' && score < WORLD_3_SCORE && subState === 'growing') subState = 'falling'; });
 
 function frame() { update(); draw(); requestAnimationFrame(frame); }
 frame();
