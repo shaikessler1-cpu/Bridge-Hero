@@ -26,12 +26,16 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-let data = JSON.parse(localStorage.getItem('bridgeHeroFinalV11')) || {
+let data = JSON.parse(localStorage.getItem('bridgeHero_Stable_V1')) || {
     gold: 0, highScore: 0, unlocked: ['Hero'], selected: 'Hero',
     unlockedPlats: ['Classic'], selectedPlat: 'Classic', worldReached: 1
 };
-function save() { localStorage.setItem('bridgeHeroFinalV11', JSON.stringify(data)); }
-
+function save() { localStorage.setItem('bridgeHero_Stable_V1', JSON.stringify(data)); }
+function addGold() {
+    data.gold += 1;
+    goldPopups.push({ x: player.x, y: player.y, timer: 60 });
+    save();
+}
 const CHARS = {
     'Hero': { price: 0, draw: (x, y, s) => {
         ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.roundRect(x, y, s, s, s*0.2); ctx.fill();
@@ -78,7 +82,7 @@ const PLATS = {
 let state = 'MENU', score = 0, subState = 'waiting', shopTab = 'CHARS';
 let platforms = [], pillars = [], stick = { len: 0, angle: -Math.PI/2 };
 let player = { x: 0, y: 0, v: 0, targetX: 0, size: 24 };
-let showBird = true;
+let goldPopups = [];
 const LEVEL_STEP = 25;
 const WORLD_3_SCORE = LEVEL_STEP * 2;
 const LEVEL_4_SCORE = LEVEL_STEP * 3;
@@ -101,7 +105,7 @@ function initGame(mode = 1) {
     player.y = (mode === 3) ? canvas.height/2 : canvas.height * 0.65 - 24;
     player.v = 0; stick = { len: 0, angle: -Math.PI/2 };
     state = 'PLAY'; subState = 'waiting';
-    showBird = true;
+    goldPopups = [];
 }
 
 function addPlat() {
@@ -112,9 +116,11 @@ function addPlat() {
 }
 
 function spawnPillar() {
-    let gap = score >= LEVEL_4_SCORE ? 200 : 250;  // 250 for level 3, 200 for level 4 and 5
-    let pos = 100 + Math.random() * (canvas.height - gap - 200);
-    pillars.push({ x: canvas.width, top: pos, gap: gap, passed: false });
+    let gapSize = 260;
+    if (score >= 75) gapSize = 235;
+    if (score >= 100) gapSize = 215;
+    let pos = 100 + Math.random() * (canvas.height - gapSize - 200);
+    pillars.push({ x: canvas.width, top: pos, gap: gapSize, passed: false });
 }
 
 function isInside(ex, ey, btn) {
@@ -124,10 +130,12 @@ function isInside(ex, ey, btn) {
 function update() {
     if (state !== 'PLAY') return;
 
+    goldPopups.forEach(p => { p.y -= 1; p.timer--; });
+    goldPopups = goldPopups.filter(p => p.timer > 0);
+
     if (score < WORLD_3_SCORE) {
         if (subState === 'growing') {
             stick.len += 3.8;
-            showBird = false;
         }
 
         if (subState === 'falling') {
@@ -145,10 +153,9 @@ function update() {
                 let end = platforms[0].x + platforms[0].w + stick.len;
                 if (end >= platforms[1].x && end <= platforms[1].x + platforms[1].w) {
                     score++;
-                    if (score % LEVEL_STEP === 0) data.gold += 1;
-                    if (score > data.highScore) data.highScore = score;
-                    if (score === WORLD_3_SCORE) data.worldReached = 3;
-                    save();
+                    if (score % 5 === 0) addGold();
+                    if (score > data.highScore) { data.highScore = score; save(); }
+                    if (score === WORLD_3_SCORE) { data.worldReached = 3; save(); }
                     subState = 'transition';
                 } else {
                     subState = 'dead';
@@ -165,7 +172,6 @@ function update() {
                 platforms.shift();
                 addPlat();
                 subState = 'waiting';
-                showBird = true;
             }
         }
 
@@ -174,7 +180,7 @@ function update() {
             if (player.y > canvas.height) state = 'GAMEOVER';
         }
     } else {
-        player.v += 0.45;
+        player.v += 0.42;
         player.y += player.v;
 
         let pillarSpeed = score >= LEVEL_4_SCORE ? 5.5 : 3.5;  // 3.5 for level 3, 5.5 for level 4 and 5
@@ -187,9 +193,8 @@ function update() {
             if (!p.passed && p.x + 50 < player.x) {
                 p.passed = true;
                 score++;
-                if (score % LEVEL_STEP === 0) data.gold += 1;
-                if (score > data.highScore) data.highScore = score;
-                save();
+                if (score % 5 === 0) addGold();
+                if (score > data.highScore) { data.highScore = score; save(); }
             }
             if (player.x + player.size > p.x && player.x < p.x + 50) {
                 if (player.y < p.top || player.y + player.size > p.top + p.gap) {
@@ -260,8 +265,9 @@ function draw() {
         ctx.fillText('BLOCKS', canvas.width/2+60, canvas.height*0.145);
 
         let items = shopTab === 'CHARS' ? CHARS : PLATS;
-        let i = 0;
-        for (let name in items) {
+        let names = Object.keys(items);
+        for (let i = 0; i < names.length; i++) {
+            let name = names[i];
             let x = canvas.width/2 - 85 + (i % 2) * 170;
             let y = canvas.height*0.28 + Math.floor(i/2) * 115;
             let isSelected = (shopTab === 'CHARS' ? data.selected : data.selectedPlat) === name;
@@ -273,10 +279,11 @@ function draw() {
             else { ctx.fillStyle = items[name].color; ctx.beginPath(); ctx.roundRect(x-30, y-20, 60, 20, 4); ctx.fill(); }
             ctx.fillStyle = isUnlocked ? 'white' : '#f1c40f'; ctx.font = 'bold 13px Arial';
             ctx.fillText(isUnlocked ? name : `${items[name].price} G`, x, y+35);
-            i++;
         }
 
         drawStyledButton('BACK', BTNS.back, '#778899', '#2f4f4f');
+        ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 18px Arial';
+        ctx.fillText(`GOLD: ${data.gold}`, canvas.width/2, canvas.height*0.85);
     }
     else if (state === 'GAMEOVER') {
         ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -311,6 +318,7 @@ function draw() {
         }
 
         CHARS[data.selected].draw(player.x, player.y, player.size);
+        goldPopups.forEach(p => { ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 20px Arial'; ctx.fillText('+1 G', p.x, p.y); });
         ctx.fillStyle = 'white'; ctx.font = '900 60px Arial'; ctx.textAlign = 'center';
         ctx.fillText(score, canvas.width/2, 100);
         
@@ -331,21 +339,26 @@ function handleInput(ex, ey) {
         if (ey > canvas.height*0.1 && ey < canvas.height*0.2) { shopTab = ex < canvas.width/2 ? 'CHARS' : 'PLATS'; }
         if (isInside(ex, ey, BTNS.back)) state = 'MENU';
         let items = shopTab === 'CHARS' ? CHARS : PLATS;
-        let i = 0;
-        for (let name in items) {
+        let names = Object.keys(items);
+        for (let i = 0; i < names.length; i++) {
+            let name = names[i];
             let x = canvas.width/2 - 85 + (i % 2) * 170;
             let y = canvas.height*0.28 + Math.floor(i/2) * 115;
             if (Math.abs(ex-x) < 75 && Math.abs(ey-y) < 50) {
                 let list = shopTab === 'CHARS' ? data.unlocked : data.unlockedPlats;
                 if (!list.includes(name)) {
-                    let pricesChars = [0, 5, 10, 15, 20, 25, 50];
-                    let price = shopTab === 'CHARS' ? pricesChars[i] : items[name].price;
-                    if (data.gold >= price) { data.gold -= price; list.push(name); save(); }
+                    let price = items[name].price;
+                    if (data.gold >= price) { 
+                        data.gold -= price; 
+                        list.push(name); 
+                        if (shopTab === 'CHARS') data.selected = name; else data.selectedPlat = name;
+                        save(); 
+                    }
                 } else {
                     if (shopTab === 'CHARS') data.selected = name; else data.selectedPlat = name;
                     save();
                 }
-            } i++;
+            }
         }
     } 
     else if (state === 'GAMEOVER') {
@@ -356,7 +369,7 @@ function handleInput(ex, ey) {
         if (score < WORLD_3_SCORE) {
             if (subState === 'waiting') subState = 'growing';
         } else {
-            player.v = -7.5;
+            player.v = -7.2;
         }
     }
 }
