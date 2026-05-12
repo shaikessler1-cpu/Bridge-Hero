@@ -145,6 +145,46 @@ const WORLD_3_SCORE = LEVEL_STEP * 2;
 const LEVEL_4_SCORE = LEVEL_STEP * 3;
 const WORLD_5_SCORE = LEVEL_STEP * 4;
 const LEVEL_6_SCORE = LEVEL_STEP * 5;
+const MUSIC = {
+    1: 'music/world1.mp3',
+    2: 'music/world2.mp3',
+    3: 'music/world3.mp3'
+};
+let currentMusicWorld = null;
+let currentMusic = null;
+let audioUnlocked = false;
+
+function getWorldForScore(value) {
+    if (value >= WORLD_5_SCORE) return 3;
+    if (value >= WORLD_3_SCORE) return 2;
+    return 1;
+}
+
+function playWorldMusic(world) {
+    audioUnlocked = true;
+    if (currentMusicWorld === world && currentMusic && !currentMusic.paused) return;
+    if (currentMusic) {
+        currentMusic.pause();
+        currentMusic.currentTime = 0;
+    }
+    currentMusicWorld = world;
+    currentMusic = new Audio(MUSIC[world]);
+    currentMusic.loop = true;
+    currentMusic.volume = 0.45;
+    currentMusic.play().catch(() => {});
+}
+
+function syncWorldMusic() {
+    if (audioUnlocked && state === 'PLAY') playWorldMusic(getWorldForScore(score));
+}
+
+function stopMusic() {
+    if (!currentMusic) return;
+    currentMusic.pause();
+    currentMusic.currentTime = 0;
+    currentMusic = null;
+    currentMusicWorld = null;
+}
 
 const BTNS = {
     play1: { x: 0, y: 0, w: 220, h: 60, r: 15 },
@@ -168,6 +208,7 @@ function initGame(mode = 1) {
     goldPopups = [];
     playerTrail = [];
     if (mode === 5) setupCrossy();
+    playWorldMusic(getWorldForScore(score));
 }
 
 function addPlat() {
@@ -247,6 +288,7 @@ function completeCrossyStep(finishedMove) {
         if (score % 5 === 0) addGold();
         if (score > data.highScore) { data.highScore = score; save(); }
         if (score === LEVEL_6_SCORE) spawnMilestoneBurst();
+        syncWorldMusic();
     }
     ensureCrossyLane(crossy.row);
 }
@@ -323,6 +365,7 @@ function update() {
                     if (score % 5 === 0) addGold();
                     if (score > data.highScore) { data.highScore = score; save(); }
                     if (score === WORLD_3_SCORE) { data.worldReached = 2; save(); }
+                    syncWorldMusic();
                     subState = 'transition';
                 } else {
                     subState = 'dead';
@@ -365,6 +408,7 @@ function update() {
                 if (score % 5 === 0) addGold();
                 if (score > data.highScore) { data.highScore = score; save(); }
                 if (score === WORLD_5_SCORE) { data.worldReached = 3; save(); setupCrossy(); }
+                syncWorldMusic();
             }
             if (player.x + player.size > p.x && player.x < p.x + 50) {
                 if (player.y < p.top || player.y + player.size > p.top + p.gap) {
@@ -630,7 +674,7 @@ function handleInput(ex, ey) {
     } 
     else if (state === 'GAMEOVER') {
         if (isInside(ex, ey, BTNS.retry)) initGame(score >= WORLD_5_SCORE ? 5 : score >= WORLD_3_SCORE ? 3 : 1);
-        if (isInside(ex, ey, BTNS.menu)) state = 'MENU';
+        if (isInside(ex, ey, BTNS.menu)) { state = 'MENU'; stopMusic(); }
     }
     else {
         if (score < WORLD_3_SCORE) {
@@ -673,6 +717,7 @@ function activateCheat(scoreValue) {
     const startMode = scoreValue >= WORLD_5_SCORE ? 5 : scoreValue >= WORLD_3_SCORE ? 3 : 1;
     initGame(startMode);
     score = scoreValue;
+    syncWorldMusic();
     if (score >= WORLD_5_SCORE) {
         setupCrossy();
     } else if (score >= WORLD_3_SCORE) {
