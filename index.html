@@ -34,63 +34,122 @@ function save() { localStorage.setItem('bridgeHero_Stable_V1', JSON.stringify(da
 function addGold() {
     data.gold += 1;
     goldPopups.push({ x: player.x, y: player.y, timer: 60 });
+    spawnParticles(player.x + player.size/2, player.y + player.size/2, '#f1c40f', 12);
     save();
+}
+
+function spawnMilestoneBurst() {
+    spawnParticles(player.x + player.size/2, player.y + player.size/2, '#ffffff', 24);
+    spawnParticles(player.x + player.size/2, player.y + player.size/2, '#f1c40f', 12);
+}
+
+function spawnParticles(x, y, color, count = 10) {
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 3,
+            vy: (Math.random() - 1.5) * 3,
+            size: 2 + Math.random() * 3,
+            alpha: 1,
+            color
+        });
+    }
 }
 const CHARS = {
     'Hero': { price: 0, draw: (x, y, s) => {
-        ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.roundRect(x, y, s, s, s*0.2); ctx.fill();
-        ctx.fillStyle = 'white'; ctx.fillRect(x+s*0.6, y+s*0.2, s*0.2, s*0.2);
+        ctx.fillStyle = '#9b4d1f'; ctx.beginPath(); ctx.roundRect(x+s*0.08, y+s*0.06, s*0.84, s*0.9, s*0.18); ctx.fill();
+        ctx.fillStyle = '#f39c35'; ctx.beginPath(); ctx.roundRect(x+s*0.12, y+s*0.02, s*0.76, s*0.86, s*0.2); ctx.fill();
+        ctx.fillStyle = '#ffd166'; ctx.fillRect(x+s*0.18, y+s*0.04, s*0.64, s*0.18);
+        ctx.fillStyle = '#fff7e6'; ctx.beginPath(); ctx.arc(x+s*0.35, y+s*0.38, s*0.12, 0, Math.PI*2); ctx.arc(x+s*0.65, y+s*0.38, s*0.12, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.arc(x+s*0.37, y+s*0.39, s*0.045, 0, Math.PI*2); ctx.arc(x+s*0.67, y+s*0.39, s*0.045, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#8e3f16'; ctx.fillRect(x+s*0.36, y+s*0.68, s*0.28, s*0.08);
     }},
     'Ninja': { price: 5, draw: (x, y, s) => {
-        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.roundRect(x, y, s, s, s*0.2); ctx.fill();
-        ctx.fillStyle = '#e74c3c'; ctx.fillRect(x, y+s*0.3, s, s*0.2);
-        ctx.fillStyle = 'white'; ctx.fillRect(x+s*0.2, y+s*0.35, s*0.2, s*0.1);
+        ctx.fillStyle = '#070707'; ctx.beginPath(); ctx.roundRect(x+s*0.08, y+s*0.02, s*0.84, s*0.92, s*0.2); ctx.fill();
+        ctx.fillStyle = '#1f2933'; ctx.beginPath(); ctx.roundRect(x+s*0.13, y+s*0.1, s*0.74, s*0.78, s*0.16); ctx.fill();
+        ctx.fillStyle = '#e74c3c'; ctx.fillRect(x+s*0.06, y+s*0.28, s*0.88, s*0.18);
+        ctx.fillStyle = '#ff7675'; ctx.beginPath(); ctx.moveTo(x+s*0.82, y+s*0.28); ctx.lineTo(x+s*1.08, y+s*0.17); ctx.lineTo(x+s*0.88, y+s*0.48); ctx.fill();
+        ctx.fillStyle = '#f8f9fa'; ctx.beginPath(); ctx.roundRect(x+s*0.22, y+s*0.34, s*0.56, s*0.16, s*0.04); ctx.fill();
+        ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x+s*0.38, y+s*0.42, s*0.045, 0, Math.PI*2); ctx.arc(x+s*0.62, y+s*0.42, s*0.045, 0, Math.PI*2); ctx.fill();
     }},
     'Robot': { price: 10, draw: (x, y, s) => {
-        ctx.fillStyle = '#bdc3c7'; ctx.beginPath(); ctx.roundRect(x, y, s, s, 2); ctx.fill();
-        ctx.fillStyle = '#00d2ff'; ctx.fillRect(x+s*0.1, y+s*0.2, s*0.8, s*0.3);
+        ctx.strokeStyle = '#6c7a89'; ctx.lineWidth = Math.max(1, s*0.06);
+        ctx.beginPath(); ctx.moveTo(x+s*0.5, y+s*0.08); ctx.lineTo(x+s*0.5, y-s*0.08); ctx.stroke();
+        ctx.fillStyle = '#ffca3a'; ctx.beginPath(); ctx.arc(x+s*0.5, y-s*0.1, s*0.07, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.roundRect(x+s*0.08, y+s*0.08, s*0.84, s*0.78, s*0.08); ctx.fill();
+        ctx.fillStyle = '#dfe6e9'; ctx.beginPath(); ctx.roundRect(x+s*0.15, y+s*0.14, s*0.7, s*0.3, s*0.04); ctx.fill();
+        ctx.fillStyle = '#00d2ff'; ctx.beginPath(); ctx.arc(x+s*0.34, y+s*0.29, s*0.075, 0, Math.PI*2); ctx.arc(x+s*0.66, y+s*0.29, s*0.075, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#34495e'; ctx.fillRect(x+s*0.28, y+s*0.62, s*0.44, s*0.08);
+        ctx.fillStyle = '#74b9ff'; ctx.fillRect(x+s*0.18, y+s*0.5, s*0.12, s*0.08); ctx.fillRect(x+s*0.7, y+s*0.5, s*0.12, s*0.08);
     }},
     'Alien': { price: 15, draw: (x, y, s) => {
-        ctx.fillStyle = '#a29bfe'; ctx.beginPath(); ctx.ellipse(x+s/2, y+s/2, s/1.8, s/2.2, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = 'black'; ctx.beginPath(); ctx.ellipse(x+s*0.3, y+s*0.45, s*0.15, s*0.2, 0, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(x+s*0.7, y+s*0.45, s*0.15, s*0.2, 0, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#6c5ce7'; ctx.lineWidth = Math.max(1, s*0.05);
+        ctx.beginPath(); ctx.moveTo(x+s*0.32, y+s*0.12); ctx.lineTo(x+s*0.2, y-s*0.08); ctx.moveTo(x+s*0.68, y+s*0.12); ctx.lineTo(x+s*0.82, y-s*0.08); ctx.stroke();
+        ctx.fillStyle = '#55efc4'; ctx.beginPath(); ctx.arc(x+s*0.2, y-s*0.08, s*0.06, 0, Math.PI*2); ctx.arc(x+s*0.82, y-s*0.08, s*0.06, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#a29bfe'; ctx.beginPath(); ctx.ellipse(x+s/2, y+s*0.5, s*0.46, s*0.42, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#6c5ce7'; ctx.beginPath(); ctx.ellipse(x+s*0.32, y+s*0.42, s*0.14, s*0.18, -0.25, 0, Math.PI*2); ctx.ellipse(x+s*0.68, y+s*0.42, s*0.14, s*0.18, 0.25, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x+s*0.35, y+s*0.43, s*0.04, 0, Math.PI*2); ctx.arc(x+s*0.65, y+s*0.43, s*0.04, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#2d3436'; ctx.lineWidth = Math.max(1, s*0.035); ctx.beginPath(); ctx.arc(x+s*0.5, y+s*0.62, s*0.11, 0.2, Math.PI-0.2); ctx.stroke();
     }},
     'Ghost': { price: 20, draw: (x, y, s) => {
-        ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.roundRect(x, y, s, s*0.8, [s/2, s/2, 5, 5]); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.88)'; ctx.beginPath(); ctx.roundRect(x+s*0.08, y+s*0.02, s*0.84, s*0.72, [s*0.42, s*0.42, s*0.08, s*0.08]); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x+s*0.08, y+s*0.66);
+        ctx.lineTo(x+s*0.22, y+s*0.92); ctx.lineTo(x+s*0.36, y+s*0.68);
+        ctx.lineTo(x+s*0.5, y+s*0.92); ctx.lineTo(x+s*0.64, y+s*0.68);
+        ctx.lineTo(x+s*0.78, y+s*0.92); ctx.lineTo(x+s*0.92, y+s*0.66);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#2d3436'; ctx.beginPath(); ctx.arc(x+s*0.36, y+s*0.38, s*0.075, 0, Math.PI*2); ctx.arc(x+s*0.64, y+s*0.38, s*0.075, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#636e72'; ctx.lineWidth = Math.max(1, s*0.035); ctx.beginPath(); ctx.arc(x+s*0.5, y+s*0.55, s*0.1, 0.15, Math.PI-0.15); ctx.stroke();
     }},
     'Knight': { price: 25, draw: (x, y, s) => {
-        ctx.fillStyle = '#7f8c8d'; ctx.fillRect(x, y, s, s);
-        ctx.fillStyle = '#f1c40f'; ctx.fillRect(x, y+s*0.4, s, s*0.15);
+        ctx.fillStyle = '#596275'; ctx.beginPath(); ctx.roundRect(x+s*0.08, y+s*0.04, s*0.84, s*0.88, s*0.08); ctx.fill();
+        ctx.fillStyle = '#a4b0be'; ctx.beginPath(); ctx.roundRect(x+s*0.16, y+s*0.1, s*0.68, s*0.58, s*0.08); ctx.fill();
+        ctx.fillStyle = '#2f3542'; ctx.fillRect(x+s*0.2, y+s*0.31, s*0.6, s*0.16);
+        ctx.fillStyle = '#f1c40f'; ctx.fillRect(x+s*0.18, y+s*0.7, s*0.64, s*0.12);
+        ctx.fillStyle = '#fff'; ctx.fillRect(x+s*0.32, y+s*0.35, s*0.12, s*0.05); ctx.fillRect(x+s*0.58, y+s*0.35, s*0.12, s*0.05);
+        ctx.fillStyle = '#d63031'; ctx.beginPath(); ctx.moveTo(x+s*0.5, y-s*0.08); ctx.lineTo(x+s*0.64, y+s*0.08); ctx.lineTo(x+s*0.36, y+s*0.08); ctx.fill();
     }},
     'Demon': { price: 50, draw: (x, y, s) => {
-        ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.roundRect(x, y, s, s, 4); ctx.fill();
-        ctx.fillStyle = 'black'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x+s*0.3, y-s*0.3); ctx.lineTo(x+s*0.4, y); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(x+s, y); ctx.lineTo(x+s*0.7, y-s*0.3); ctx.lineTo(x+s*0.6, y); ctx.fill();
+        ctx.fillStyle = '#2d0b0b'; ctx.beginPath(); ctx.moveTo(x+s*0.1, y+s*0.08); ctx.lineTo(x+s*0.28, y-s*0.24); ctx.lineTo(x+s*0.4, y+s*0.1); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(x+s*0.9, y+s*0.08); ctx.lineTo(x+s*0.72, y-s*0.24); ctx.lineTo(x+s*0.6, y+s*0.1); ctx.fill();
+        ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.roundRect(x+s*0.08, y+s*0.06, s*0.84, s*0.86, s*0.16); ctx.fill();
+        ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.roundRect(x+s*0.17, y+s*0.14, s*0.66, s*0.54, s*0.12); ctx.fill();
+        ctx.fillStyle = '#fffa65'; ctx.beginPath(); ctx.ellipse(x+s*0.35, y+s*0.38, s*0.13, s*0.08, -0.25, 0, Math.PI*2); ctx.ellipse(x+s*0.65, y+s*0.38, s*0.13, s*0.08, 0.25, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x+s*0.38, y+s*0.38, s*0.035, 0, Math.PI*2); ctx.arc(x+s*0.62, y+s*0.38, s*0.035, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#111'; ctx.fillRect(x+s*0.32, y+s*0.68, s*0.36, s*0.08);
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(x+s*0.4, y+s*0.68); ctx.lineTo(x+s*0.46, y+s*0.82); ctx.lineTo(x+s*0.52, y+s*0.68); ctx.fill();
     }}
 };
 
 const PLATS = {
     'Classic': { color: '#222', price: 0 },
-    'Obsidian': { color: '#0b0d0f', price: 40 },
-    'Neon Blue': { color: '#00d2ff', price: 60 },
-    'Neon Pink': { color: '#ff00ff', price: 60 },
-    'Emerald': { color: '#2ecc71', price: 100 },
-    'Gold Bar': { color: '#f1c40f', price: 150 },
-    'Magma': { color: '#e67e22', price: 200 }
+    'Obsidian': { color: '#0b0d0f', price: 5 },
+    'Neon Blue': { color: '#00d2ff', price: 10 },
+    'Neon Pink': { color: '#ff00ff', price: 20 },
+    'Emerald': { color: '#2ecc71', price: 30 },
+    'Gold Bar': { color: '#f1c40f', price: 40 },
+    'Magma': { color: '#e67e22', price: 1000000 }
 };
 
 let state = 'MENU', score = 0, subState = 'waiting', shopTab = 'CHARS';
 let platforms = [], pillars = [], stick = { len: 0, angle: -Math.PI/2 };
 let player = { x: 0, y: 0, v: 0, targetX: 0, size: 24 };
+let crossy = { lanes: [], cols: 22, row: 0, col: 11, bestRow: 0, laneH: 58, move: null, nextLane: 0, camera: 0, started: false };
 let goldPopups = [];
+let particles = [];
+let playerTrail = [];
 const LEVEL_STEP = 25;
 const WORLD_3_SCORE = LEVEL_STEP * 2;
 const LEVEL_4_SCORE = LEVEL_STEP * 3;
-const LEVEL_5_SCORE = LEVEL_STEP * 4;
+const WORLD_5_SCORE = LEVEL_STEP * 4;
+const LEVEL_6_SCORE = LEVEL_STEP * 5;
 
 const BTNS = {
     play1: { x: 0, y: 0, w: 220, h: 60, r: 15 },
     play3: { x: 0, y: 0, w: 220, h: 60, r: 15 },
+    play5: { x: 0, y: 0, w: 220, h: 60, r: 15 },
     shop: { x: 0, y: 0, w: 220, h: 60, r: 15 },
     back: { x: 0, y: 0, w: 140, h: 45, r: 10 },
     retry: { x: 0, y: 0, w: 200, h: 60, r: 15 },
@@ -98,14 +157,17 @@ const BTNS = {
 };
 
 function initGame(mode = 1) {
-    score = (mode === 3) ? WORLD_3_SCORE : 0;
+    score = (mode === 5) ? WORLD_5_SCORE : (mode === 3) ? WORLD_3_SCORE : 0;
     platforms = [{ x: 50, w: 80 }]; pillars = [];
     addPlat();
+    player.size = 24;
     player.x = 50 + 80 - 24;
     player.y = (mode === 3) ? canvas.height/2 : canvas.height * 0.65 - 24;
     player.v = 0; stick = { len: 0, angle: -Math.PI/2 };
     state = 'PLAY'; subState = 'waiting';
     goldPopups = [];
+    playerTrail = [];
+    if (mode === 5) setupCrossy();
 }
 
 function addPlat() {
@@ -123,6 +185,89 @@ function spawnPillar() {
     pillars.push({ x: canvas.width, top: pos, gap: gapSize, passed: false });
 }
 
+function makeCrossyLane(index) {
+    const levelSix = score >= LEVEL_6_SCORE;
+    const safe = index === 0 || index % 5 === 0;
+    const direction = Math.random() < 0.5 ? -1 : 1;
+    const speed = (levelSix ? 3.4 : 2.4) + Math.random() * (levelSix ? 2.4 : 1.7);
+    const lane = { safe, direction, speed, cars: [], color: safe ? '#2d6a4f' : '#273043' };
+    if (!safe) {
+        const count = levelSix ? 4 : 3;
+        for (let i = 0; i < count; i++) {
+            lane.cars.push({
+                x: Math.random() * canvas.width + i * (canvas.width / count),
+                w: 54 + Math.random() * 34,
+                color: ['#ff595e', '#ffca3a', '#1982c4', '#8ac926'][Math.floor(Math.random() * 4)]
+            });
+        }
+    }
+    return lane;
+}
+
+function setupCrossy() {
+    const laneCount = Math.max(9, Math.ceil(canvas.height / crossy.laneH) + 3);
+    crossy = { lanes: [], cols: 22, row: 0, col: 11, bestRow: 0, laneH: Math.max(48, Math.min(64, canvas.height / 11)), move: null, nextLane: 0, camera: 0, started: false };
+    for (let i = 0; i < laneCount; i++) crossy.lanes.push(makeCrossyLane(crossy.nextLane++));
+    placeCrossyPlayer();
+    subState = 'crossing';
+}
+
+function ensureCrossyLane(row) {
+    while (crossy.lanes.length <= row + 8) {
+        crossy.lanes.push(makeCrossyLane(crossy.nextLane++));
+    }
+}
+
+function crossyCellW() {
+    return canvas.width / crossy.cols;
+}
+
+function crossyBaseY() {
+    return canvas.height - crossy.laneH * 1.25;
+}
+
+function crossyLaneY(row) {
+    return crossyBaseY() - row * crossy.laneH + crossy.camera;
+}
+
+function placeCrossyPlayer() {
+    const cellW = crossyCellW();
+    player.size = Math.min(34, cellW * 1.56, crossy.laneH * 0.6);
+    player.x = crossy.col * cellW + cellW / 2 - player.size / 2;
+    player.y = crossyLaneY(crossy.row) - player.size / 2;
+}
+
+function completeCrossyStep(finishedMove) {
+    placeCrossyPlayer();
+    if (crossy.row > crossy.bestRow) {
+        crossy.bestRow = crossy.row;
+        score++;
+        spawnParticles(player.x + player.size/2, player.y + player.size/2, '#ffffff', 8);
+        if ([100,125,150,175,200].includes(score)) spawnMilestoneBurst();
+        if (score % 5 === 0) addGold();
+        if (score > data.highScore) { data.highScore = score; save(); }
+        if (score === LEVEL_6_SCORE) spawnMilestoneBurst();
+    }
+    ensureCrossyLane(crossy.row);
+}
+
+function moveCrossy(dx, dy) {
+    if (state !== 'PLAY' || score < WORLD_5_SCORE || crossy.move) return;
+    const nextCol = Math.max(0, Math.min(crossy.cols - 1, crossy.col + dx));
+    const nextRow = Math.max(0, crossy.row + dy);
+    if (nextCol === crossy.col && nextRow === crossy.row) return;
+    ensureCrossyLane(nextRow);
+    crossy.started = true;
+    crossy.move = {
+        sx: player.x, sy: player.y,
+        col: nextCol, row: nextRow,
+        dx, dy,
+        t: 0
+    };
+    crossy.col = nextCol;
+    crossy.row = nextRow;
+}
+
 function isInside(ex, ey, btn) {
     return ex > btn.x - btn.w/2 && ex < btn.x + btn.w/2 && ey > btn.y - btn.h/2 && ey < btn.y + btn.h/2;
 }
@@ -132,6 +277,26 @@ function update() {
 
     goldPopups.forEach(p => { p.y -= 1; p.timer--; });
     goldPopups = goldPopups.filter(p => p.timer > 0);
+
+    particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.08;
+        p.alpha -= 0.03;
+        p.size *= 0.98;
+    });
+    particles = particles.filter(p => p.alpha > 0.05);
+
+    if (score >= WORLD_3_SCORE && score < WORLD_5_SCORE) {
+        playerTrail.unshift({ x: player.x + player.size/2, y: player.y + player.size/2, alpha: 0.6, size: player.size * 0.55 });
+        if (playerTrail.length > 12) playerTrail.pop();
+    } else {
+        playerTrail = [];
+    }
+
+    if (state === 'GAMEOVER' && playerTrail.length > 0 && playerTrail[0].alpha > 0) {
+        playerTrail.forEach(trail => { trail.alpha -= 0.02; });
+    }
 
     if (score < WORLD_3_SCORE) {
         if (subState === 'growing') {
@@ -153,9 +318,11 @@ function update() {
                 let end = platforms[0].x + platforms[0].w + stick.len;
                 if (end >= platforms[1].x && end <= platforms[1].x + platforms[1].w) {
                     score++;
+                    spawnParticles(player.x + player.size/2, player.y + player.size/2, '#ffffff', 8);
+                    if ([50,75,100,125,150].includes(score)) spawnMilestoneBurst();
                     if (score % 5 === 0) addGold();
                     if (score > data.highScore) { data.highScore = score; save(); }
-                    if (score === WORLD_3_SCORE) { data.worldReached = 3; save(); }
+                    if (score === WORLD_3_SCORE) { data.worldReached = 2; save(); }
                     subState = 'transition';
                 } else {
                     subState = 'dead';
@@ -179,7 +346,7 @@ function update() {
             player.y += 12;
             if (player.y > canvas.height) state = 'GAMEOVER';
         }
-    } else {
+    } else if (score < WORLD_5_SCORE) {
         player.v += 0.42;
         player.y += player.v;
 
@@ -193,8 +360,11 @@ function update() {
             if (!p.passed && p.x + 50 < player.x) {
                 p.passed = true;
                 score++;
+                spawnParticles(player.x + player.size/2, player.y + player.size/2, '#ffffff', 8);
+                if ([50,75,100,125,150].includes(score)) spawnMilestoneBurst();
                 if (score % 5 === 0) addGold();
                 if (score > data.highScore) { data.highScore = score; save(); }
+                if (score === WORLD_5_SCORE) { data.worldReached = 3; save(); setupCrossy(); }
             }
             if (player.x + player.size > p.x && player.x < p.x + 50) {
                 if (player.y < p.top || player.y + player.size > p.top + p.gap) {
@@ -205,6 +375,60 @@ function update() {
 
         if (player.y > canvas.height || player.y < 0) state = 'GAMEOVER';
         pillars = pillars.filter(p => p.x > -100);
+    } else {
+        if (subState !== 'crossing') setupCrossy();
+
+        if (crossy.started) {
+            const scrollSpeed = score >= LEVEL_6_SCORE ? 1.05 : 0.72;
+            crossy.camera += scrollSpeed;
+        }
+        ensureCrossyLane(crossy.row + 8);
+
+        crossy.lanes.forEach(lane => {
+            if (lane.safe) return;
+            lane.cars.forEach(car => {
+                car.x += lane.speed * lane.direction;
+                if (lane.direction > 0 && car.x > canvas.width + 80) car.x = -car.w - Math.random() * 160;
+                if (lane.direction < 0 && car.x + car.w < -80) car.x = canvas.width + Math.random() * 160;
+            });
+        });
+
+        if (crossy.move) {
+            crossy.move.t += 0.18;
+            const t = Math.min(1, crossy.move.t);
+            const cellW = crossyCellW();
+            const tx = crossy.move.col * cellW + cellW / 2 - player.size / 2;
+            const ty = crossyLaneY(crossy.move.row) - player.size / 2;
+            player.x = crossy.move.sx + (tx - crossy.move.sx) * t;
+            player.y = crossy.move.sy + (ty - crossy.move.sy) * t;
+            if (t >= 1) {
+                const finishedMove = crossy.move;
+                crossy.move = null;
+                completeCrossyStep(finishedMove);
+            }
+        } else {
+            placeCrossyPlayer();
+        }
+
+        if (player.y > canvas.height || player.y + player.size < 0) {
+            state = 'GAMEOVER';
+            spawnParticles(player.x + player.size/2, player.y + player.size/2, '#ff595e', 18);
+        }
+
+        const lane = crossy.lanes[crossy.row];
+        if (lane && !lane.safe) {
+            const py = player.y + player.size * 0.15;
+            const ph = player.size * 0.7;
+            lane.cars.forEach(car => {
+                const carY = crossyLaneY(crossy.row) - crossy.laneH / 2;
+                const carH = crossy.laneH * 0.58;
+                if (player.x + player.size * 0.85 > car.x && player.x + player.size * 0.15 < car.x + car.w &&
+                    py + ph > carY && py < carY + carH) {
+                    state = 'GAMEOVER';
+                    spawnParticles(player.x + player.size/2, player.y + player.size/2, '#ff595e', 18);
+                }
+            });
+        }
     }
 }
 
@@ -228,7 +452,8 @@ function draw() {
 
     BTNS.play1.x = canvas.width/2; BTNS.play1.y = canvas.height * 0.42;
     BTNS.play3.x = canvas.width/2; BTNS.play3.y = canvas.height * 0.53;
-    BTNS.shop.x = canvas.width/2; BTNS.shop.y = canvas.height * 0.64;
+    BTNS.play5.x = canvas.width/2; BTNS.play5.y = canvas.height * 0.64;
+    BTNS.shop.x = canvas.width/2; BTNS.shop.y = data.worldReached >= 3 ? canvas.height * 0.75 : canvas.height * 0.64;
     BTNS.back.x = canvas.width/2; BTNS.back.y = canvas.height * 0.92;
     BTNS.retry.x = canvas.width/2; BTNS.retry.y = canvas.height * 0.55;
     BTNS.menu.x = canvas.width/2; BTNS.menu.y = canvas.height * 0.68;
@@ -238,7 +463,8 @@ function draw() {
         if (score < LEVEL_STEP) bg = '#2c3e50';
         else if (score < WORLD_3_SCORE) bg = '#3d2b1f';
         else if (score < LEVEL_4_SCORE) bg = '#0f0c29';
-        else bg = '#101820';
+        else if (score < WORLD_5_SCORE) bg = '#101820';
+        else bg = score < LEVEL_6_SCORE ? '#1b4332' : '#2b2d42';
     }
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -248,11 +474,12 @@ function draw() {
         ctx.fillText('BRIDGE HERO', canvas.width/2, canvas.height*0.2);
         ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 18px Arial';
         ctx.fillText(`★ BEST: ${data.highScore} ★`, canvas.width/2, canvas.height*0.27);
-        drawStyledButton('START WORLD 1', BTNS.play1, '#ff4b2b', '#ff416c');
-        if (data.worldReached >= 3) drawStyledButton('CONTINUE WORLD 3', BTNS.play3, '#00b09b', '#96c93d');
+        drawStyledButton('PLAY', BTNS.play1, '#ff4b2b', '#ff416c');
+        if (data.worldReached >= 2) drawStyledButton('WORLD 2', BTNS.play3, '#00b09b', '#96c93d');
+        if (data.worldReached >= 3) drawStyledButton('WORLD 3', BTNS.play5, '#f7971e', '#ffd200');
         drawStyledButton('THE SHOP', BTNS.shop, '#4776e6', '#8e54e9');
         ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 22px Arial';
-        ctx.fillText(`GOLD: ${data.gold}`, canvas.width/2, canvas.height*0.8);
+        ctx.fillText(`GOLD: ${data.gold}`, canvas.width/2, canvas.height*0.88);
     } else if (state === 'SHOP') {
         ctx.fillStyle = 'white'; ctx.font = 'bold 30px Arial'; ctx.textAlign = 'center';
         ctx.fillText('GAME SHOP', canvas.width/2, canvas.height*0.08);
@@ -309,30 +536,70 @@ function draw() {
             let sX = platforms[0].x + platforms[0].w, sY = canvas.height - ph;
             ctx.beginPath(); ctx.moveTo(sX, sY);
             ctx.lineTo(sX + Math.cos(stick.angle)*stick.len, sY + Math.sin(stick.angle)*stick.len); ctx.stroke();
-        } else {
+        } else if (score < WORLD_5_SCORE) {
             pillars.forEach(p => {
                 ctx.fillStyle = score >= LEVEL_4_SCORE ? '#e74c3c' : '#2ecc71';
                 ctx.fillRect(p.x, 0, 50, p.top);
                 ctx.fillRect(p.x, p.top + p.gap, 50, canvas.height);
             });
+        } else {
+            for (let i = 0; i < crossy.lanes.length; i++) {
+                const lane = crossy.lanes[i];
+                const y = crossyLaneY(i) - crossy.laneH / 2;
+                if (y > canvas.height || y + crossy.laneH < 0) continue;
+                ctx.fillStyle = lane.color;
+                ctx.fillRect(0, y, canvas.width, crossy.laneH + 1);
+                if (lane.safe) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+                    for (let x = 0; x < canvas.width; x += 52) {
+                        ctx.beginPath(); ctx.arc(x + (i % 2) * 22, y + crossy.laneH * 0.55, 5, 0, Math.PI*2); ctx.fill();
+                    }
+                } else {
+                    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([18, 18]);
+                    ctx.beginPath(); ctx.moveTo(0, y + crossy.laneH / 2); ctx.lineTo(canvas.width, y + crossy.laneH / 2); ctx.stroke();
+                    ctx.setLineDash([]);
+                    lane.cars.forEach(car => {
+                        ctx.fillStyle = car.color;
+                        ctx.beginPath(); ctx.roundRect(car.x, y + crossy.laneH * 0.2, car.w, crossy.laneH * 0.56, 8); ctx.fill();
+                        ctx.fillStyle = 'rgba(255,255,255,0.65)';
+                        ctx.fillRect(car.x + car.w * 0.18, y + crossy.laneH * 0.28, car.w * 0.18, crossy.laneH * 0.16);
+                        ctx.fillRect(car.x + car.w * 0.62, y + crossy.laneH * 0.28, car.w * 0.18, crossy.laneH * 0.16);
+                    });
+                }
+            }
         }
 
+        playerTrail.forEach(trail => {
+            ctx.fillStyle = `rgba(255,255,255, ${trail.alpha})`;
+            ctx.beginPath(); ctx.arc(trail.x, trail.y, trail.size, 0, Math.PI*2); ctx.fill();
+            trail.alpha -= 0.03;
+        });
+        playerTrail = playerTrail.filter(trail => trail.alpha > 0.05);
+
         CHARS[data.selected].draw(player.x, player.y, player.size);
+        particles.forEach(p => {
+            ctx.fillStyle = `rgba(${parseInt(p.color.slice(1,3),16)}, ${parseInt(p.color.slice(3,5),16)}, ${parseInt(p.color.slice(5,7),16)}, ${p.alpha})`;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+        });
         goldPopups.forEach(p => { ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 20px Arial'; ctx.fillText('+1 G', p.x, p.y); });
         ctx.fillStyle = 'white'; ctx.font = '900 60px Arial'; ctx.textAlign = 'center';
         ctx.fillText(score, canvas.width/2, 100);
         
         if (score >= LEVEL_STEP && score < WORLD_3_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillText('LEVEL 2: DESERT', canvas.width/2, 130); }
         if (score >= WORLD_3_SCORE && score < LEVEL_4_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillText('LEVEL 3: SKY FLIGHT', canvas.width/2, 130); }
-        if (score >= LEVEL_4_SCORE && score < LEVEL_5_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#e74c3c'; ctx.fillText('LEVEL 4: STORM SURVIVAL', canvas.width/2, 130); }
-        if (score >= LEVEL_5_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#e74c3c'; ctx.fillText('LEVEL 5: FINAL STORM', canvas.width/2, 130); }
+        if (score >= LEVEL_4_SCORE && score < WORLD_5_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#e74c3c'; ctx.fillText('LEVEL 4: STORM SURVIVAL', canvas.width/2, 130); }
+        if (score >= WORLD_5_SCORE && score < LEVEL_6_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#ffd166'; ctx.fillText('LEVEL 5: CROSSY ROAD', canvas.width/2, 130); }
+        if (score >= LEVEL_6_SCORE) { ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#ffca3a'; ctx.fillText('LEVEL 6: FAST LANES', canvas.width/2, 130); }
     }
 }
 
 function handleInput(ex, ey) {
     if (state === 'MENU') {
         if (isInside(ex, ey, BTNS.play1)) initGame(1);
-        if (data.worldReached >= 3 && isInside(ex, ey, BTNS.play3)) initGame(3);
+        if (data.worldReached >= 2 && isInside(ex, ey, BTNS.play3)) initGame(3);
+        if (data.worldReached >= 3 && isInside(ex, ey, BTNS.play5)) initGame(5);
         if (isInside(ex, ey, BTNS.shop)) state = 'SHOP';
     } 
     else if (state === 'SHOP') {
@@ -362,22 +629,83 @@ function handleInput(ex, ey) {
         }
     } 
     else if (state === 'GAMEOVER') {
-        if (isInside(ex, ey, BTNS.retry)) initGame(score >= WORLD_3_SCORE ? 3 : 1);
+        if (isInside(ex, ey, BTNS.retry)) initGame(score >= WORLD_5_SCORE ? 5 : score >= WORLD_3_SCORE ? 3 : 1);
         if (isInside(ex, ey, BTNS.menu)) state = 'MENU';
     }
     else {
         if (score < WORLD_3_SCORE) {
             if (subState === 'waiting') subState = 'growing';
-        } else {
+        } else if (score < WORLD_5_SCORE) {
             player.v = -7.2;
+        } else {
+            moveCrossy(0, 1);
         }
     }
 }
 
+let touchStart = null;
 canvas.addEventListener('mousedown', (e) => handleInput(e.clientX, e.clientY));
 canvas.addEventListener('mouseup', () => { if (state === 'PLAY' && score < WORLD_3_SCORE && subState === 'growing') subState = 'falling'; });
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e.touches[0].clientX, e.touches[0].clientY); }, {passive: false});
-canvas.addEventListener('touchend', () => { if (state === 'PLAY' && score < WORLD_3_SCORE && subState === 'growing') subState = 'falling'; });
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const isCrossyTouch = state === 'PLAY' && score >= WORLD_5_SCORE;
+    touchStart = isCrossyTouch ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+    if (!isCrossyTouch) handleInput(e.touches[0].clientX, e.touches[0].clientY);
+}, {passive: false});
+canvas.addEventListener('touchend', (e) => {
+    if (state === 'PLAY' && score < WORLD_3_SCORE && subState === 'growing') subState = 'falling';
+    if (state === 'PLAY' && score >= WORLD_5_SCORE && touchStart && e.changedTouches[0]) {
+        const dx = e.changedTouches[0].clientX - touchStart.x;
+        const dy = e.changedTouches[0].clientY - touchStart.y;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) > 30) {
+            if (Math.abs(dx) > Math.abs(dy)) moveCrossy(dx > 0 ? 1 : -1, 0);
+            else moveCrossy(0, dy > 0 ? -1 : 1);
+        } else {
+            moveCrossy(0, 1);
+        }
+    }
+    touchStart = null;
+});
+
+const CHEAT_PREFIX = 'codeword';
+let cheatBuffer = '';
+function activateCheat(scoreValue) {
+    const startMode = scoreValue >= WORLD_5_SCORE ? 5 : scoreValue >= WORLD_3_SCORE ? 3 : 1;
+    initGame(startMode);
+    score = scoreValue;
+    if (score >= WORLD_5_SCORE) {
+        setupCrossy();
+    } else if (score >= WORLD_3_SCORE) {
+        player.y = canvas.height / 2;
+    } else {
+        player.y = canvas.height * 0.65 - 24;
+    }
+    player.v = 0;
+}
+
+document.addEventListener('keydown', (e) => {
+    if (state === 'PLAY' && score >= WORLD_5_SCORE) {
+        if (e.repeat) return;
+        if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') moveCrossy(0, 1);
+        if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') moveCrossy(0, -1);
+        if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') moveCrossy(-1, 0);
+        if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') moveCrossy(1, 0);
+    }
+    if (!e.key || e.key.length !== 1) return;
+    cheatBuffer += e.key.toLowerCase();
+    const maxLength = CHEAT_PREFIX.length + 1;
+    if (cheatBuffer.length > maxLength) cheatBuffer = cheatBuffer.slice(-maxLength);
+
+    for (let i = 1; i <= 6; i++) {
+        const code = `${CHEAT_PREFIX}${i}`;
+        if (cheatBuffer.endsWith(code)) {
+            const scoreMap = [0, 0, 25, 50, 75, 100, 125];
+            activateCheat(scoreMap[i]);
+            cheatBuffer = '';
+            break;
+        }
+    }
+});
 
 function frame() { update(); draw(); requestAnimationFrame(frame); }
 frame();
